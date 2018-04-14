@@ -10,11 +10,10 @@ import numpy as np
 #from plotly.graph_objs import*
 import random
 import matplotlib.pyplot as plt
-import plotly.plotly as py
-from plotly.graph_objs import*
 import math
 import networkx as nx
 import re
+import csv
 
 #from drawingNet import draw_graph
 
@@ -114,7 +113,6 @@ class Node(object):
     
     # nodes: list of node objects
     def update(nodes):
-    
        for node in nodes:
            # list of neigbours states
            states = []
@@ -122,75 +120,95 @@ class Node(object):
            for n in node.neighbours:
                # get state of each neighbour
                states.append(Node.get_state(nodes,n))
-               
             # set future state of node to one if average of neighbour states is within threshold of node
-            
-           
            if(node.thetaOn <= np.average(states) < node.thetaOff) :
                Node.set_future_state(node,1)
                node.period.append(1)
            else: 
                Node.set_future_state(node, 0)
                node.period.append(0)
-           
-           
         # set current state to future state
        for k,node in enumerate(nodes):
            temp_future_state = Node.get_future_state(nodes,k)
            Node.set_state(node,temp_future_state)
+           
+           
+    def reset(nodes):
+        for node in nodes:
+            node.state = 0
     
   
 # determine if there is a periodic orbit of less than 2^s
 # input list of nodes, check for periodic state switch
-def period_check(nodes):
-    for node in nodes:
-        for i in list(range(len(nodes))):
-            # throw away burnout
-            if i > len(nodes)/2:
-                if node.period[i] == node.period[i+1]:
-                    node.periodicity = 1
-                
-REPEATER = re.compile(r"(.+?)\+$")
-
-def repeated(s):
-    match = REPEATER.match(s)
-    return match.group(1) if match else None
+            
+def period_check(s):
+    d={}
+    for sublen in range(1,int(len(s)/100)):
+        for i in range(0,len(s)-sublen):
+            sub = s[i:i+sublen]
+            cnt = s.count(sub)
+            if cnt >= 1 and sub not in d:
+                d[sub] = cnt
+    return(d)
 
 
 #********************************************************** main methods ***********************************************
+
+
 
 # generate random network with poisson distributed 
 c = G(1000, (17/2)*1000)
 d = edge_to_adj(c)
 
 
+    
 nodes = []
 
 for index, node in enumerate(d):
     # initialize state of node and give list of nodes nieghbours
     nodes.append(Node(0,d[index]))
 
-# implement seed and time series
-Node.set_seed(nodes[random.randint(0,len(d))],1)
 
-# take n time steps
 
+
+active = []
+node_selected = []
+
+# RESET NODE STATES
+#Node.reset(nodes)
+# SET NODE SEED RANDOMLY
+node_select = random.randint(0,(len(d)-1))
+
+Node.set_seed(nodes[node_select],1)
+
+# UPDATE NETWORK N TIMES
 for i in list(range(1000)):
     states = []
     for node in nodes:
         states.append(node.state) 
     Node.update(nodes)
-    
-  
+        
+    active.append(np.average(states))
 
-# TODO Implement 
-for i in list(range(10)):
+
+
+#period detection( WORK IN PROGRESS)
     
-    sub = repeated(''.join(map(str,nodes[i].period)))
-    if sub:
-        print("%r: %r"%(i,sub))
-    else:
-        print("%r does not repeat." %i)
+period_check(nodes[1].period)
+    
+
+   
+
+
+
+
+
+x = list(range(1000))
+
+plt.scatter(x,active)
+plt.title("Active Fraction of Nodes over Time")
+plt.xlabel("Iterates")
+plt.ylabel("Active Fraction")
 
 
 
