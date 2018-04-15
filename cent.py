@@ -18,6 +18,6 @@ print("Graph with state: ", g.nodes(True))
 
 print("**********")
 # Centrality of Nodes
-print (nx.degree_centrality(g))
-print (nx.closeness_centrality(g,None,None,True))
-print (nx.betweenness_centrality(g,None,True,None,False,None))
+#print (nx.degree_centrality(g))
+#print (nx.closeness_centrality(g,None,None,True))
+#print (nx.betweenness_centrality(g,None,True,None,False,None))
